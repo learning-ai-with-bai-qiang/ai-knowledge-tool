@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>知识库工具</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+
+        /* ============ 顶栏 ============ */
+        #topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #252526;
+            border-bottom: 1px solid #333;
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #app-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        #search-wrap {
+            position: relative;
+            flex: 1;
+            max-width: 500px;
+        }
+
+        #search-box {
+            width: 100%;
+            padding: 8px 32px 8px 14px;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        #search-box:focus {
+            border-color: #409eff;
+        }
+
+        #search-clear {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            display: none;
+            user-select: none;
+        }
+
+        #search-clear:hover {
+            color: #ccc;
+        }
+
+        #search-clear.show {
+            display: block;
+        }
+
+        #search-btn {
+            padding: 8px 18px;
+            background: #3a3a3a;
+            color: #ddd;
+            border: 1px solid #555;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        #search-btn:hover {
+            background: #4a4a4a;
+        }
+
+        #new-btn {
+            margin-left: auto;
+            padding: 8px 20px;
+            background: #409eff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        #new-btn:hover {
+            background: #66b1ff;
+        }
+
+        /* ============ 主体 ============ */
+        #content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 32px;
+        }
+
+        .category-block {
+            margin-bottom: 40px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .category-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .category-count {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .view-all {
+            margin-left: auto;
+            font-size: 13px;
+            color: #409eff;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .view-all:hover {
+            text-decoration: underline;
+        }
+
+        /* ============ 卡片墙 ============ */
+        .card-wall {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .card {
+            position: relative;
+            background: #252526;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .card:hover {
+            background: #2d2d35;
+            border-color: #409eff;
+            transform: translateY(-2px);
+        }
+
+        .card-title {
+            font-size: 15px;
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .card-summary {
+            font-size: 13px;
+            color: #aaa;
+            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: rgba(64, 158, 255, 0.15);
+            color: #66b1ff;
+            border-radius: 10px;
+        }
+
+        /* ============ 搜索结果 ============ */
+        #search-results {
+            display: none;
+        }
+
+        #search-results .category-block {
+            margin-bottom: 20px;
+        }
+
+        .empty-hint {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            padding: 60px 0;
+        }
+        .card-date {
+            font-size: 11px;
+            color: #5C62FF;
+            margin-top: 8px;
+            text-align: right;
+        }
+        #cat-nav-wrap {
+            background: #252526;
+            border-bottom: 1px solid #333;
+            padding: 10px 32px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        #cat-nav-label {
+            font-size: 13px;
+            color: #fff;
+            font-weight: 700;
+            padding: 6px 0;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        #cat-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        /* 分类导航 */
+        #cat-nav {
+            background: #252526;
+            border-bottom: 1px solid #333;
+            padding: 10px 32px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .cat-nav-btn {
+            padding: 6px 16px;
+            border-radius: 20px;
+            background: #3a3a3a;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.15s;
+            white-space: nowrap;
+            border: 1px solid transparent;
+        }
+
+        .cat-nav-btn:hover {
+            background: #4a4a4a;
+            color: #fff;
+            border-color: #409eff;
+        }
+        /* 联想下拉 */
+        #search-suggest {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 6px;
+            margin-top: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 200;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+        }
+
+        .suggest-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #ddd;
+            border-bottom: 1px solid #333;
+            transition: 0.1s;
+        }
+        .suggest-item:last-child { border-bottom: none; }
+        .suggest-item:hover { background: #409eff; color: #fff; }
+        .suggest-item .s-cat {
+            color: #888;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        .suggest-item:hover .s-cat { color: #cce5ff; }
+
+        /* 右键菜单 hover */
+        .ctx-item:hover {
+            background: #409eff;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============ 顶栏 ============ -->
+    <div id="topbar">
+        <div id="app-title">📚 知识库</div>
+        <div id="search-wrap">
+            <input id="search-box" type="text" placeholder="输入你记得的碎片...">
+            <span id="search-clear">×</span>
+            <div id="search-suggest" style="display:none;"></div>
+        </div>
+        <button id="search-btn">搜索</button>
+        <a id="fav-entry" href="favorites.html" style="padding: 8px 18px; background: transparent; color: #ffd93d; border: 1px solid rgba(255,215,0,0.4); border-radius: 6px; font-size: 14px; text-decoration: none; white-space: nowrap;">⭐ 收藏夹</a>
+        <button id="new-btn">＋ 新建知识点</button>
+    </div>
+    
+    <!-- ============ 主体 ============ -->
+    <!-- 分类导航 -->
+    <div id="cat-nav-wrap">
+        <div id="cat-nav-label">导航栏</div>
+        <div id="cat-nav"></div>
+    </div>
+    <div id="content">
+        <div id="normal-view"></div>
+        <div id="search-results"></div>
+    </div>
+
+    <!-- ============ 搜索框右键菜单 ============ -->
+    <div id="ctxMenu" style="display:none; position:fixed; z-index:9999; background:#2d2d2d; border:1px solid #444; border-radius:6px; padding:6px 0; box-shadow:0 6px 24px rgba(0,0,0,0.5); min-width:110px;">
+        <div class="ctx-item" data-action="cut" style="padding:8px 20px; cursor:pointer; font-size:14px;">剪切</div>
+        <div class="ctx-item" data-action="copy" style="padding:8px 20px; cursor:pointer; font-size:14px;">复制</div>
+        <div class="ctx-item" data-action="paste" style="padding:8px 20px; cursor:pointer; font-size:14px;">粘贴</div>
+        <div class="ctx-item" data-action="selectall" style="padding:8px 20px; cursor:pointer; font-size:14px;">全选</div>
+    </div>
+
+    <!-- 加载数据 -->
+    <script src="../data/knowledge.js"></script>
+    <script src="fuse.min.js"></script>
+
+
+    <script>
+        const MAX_PER_CATEGORY = 4;
+
+        // ============ 渲染卡片 ============
+        function makeCard(item) {
+            const card = document.createElement("div");
+            card.className = "card";
+
+            const title = document.createElement("div");
+            title.className = "card-title";
+            title.textContent = item.title;
+            card.appendChild(title);
+
+            const summary = document.createElement("div");
+            summary.className = "card-summary";
+            summary.textContent = item.summary || "";
+            card.appendChild(summary);
+
+            if (item.tags && item.tags.length) {
+                const tagsEl = document.createElement("div");
+                tagsEl.className = "card-tags";
+                item.tags.forEach(t => {
+                    const tag = document.createElement("span");
+                    tag.className = "tag";
+                    tag.textContent = t;
+                    tagsEl.appendChild(tag);
+                });
+                card.appendChild(tagsEl);
+            }
+            if (item.pinned) {
+                const mark = document.createElement("div");
+                mark.style.cssText = "position:absolute;top:8px;right:10px;font-size:14px;";
+                mark.textContent = "📌";
+                card.appendChild(mark);
+            }
+            if (item.created) {
+                const dateEl = document.createElement("div");
+                dateEl.className = "card-date";
+                dateEl.textContent = item.created;
+                card.appendChild(dateEl);
+            }        
+            card.addEventListener("click", () => {
+                const isSearch = document.getElementById("search-results").style.display === "block";
+                if (isSearch) {
+                    const q = document.getElementById("search-box").value.trim();
+                    location.href = "knowledge_engine.html?id=" + item.id +
+                        "&back=" + encodeURIComponent("index.html?q=" + encodeURIComponent(q));
+                } else {
+                    // 首页普通卡片 → 记下当前滚动位置
+                    sessionStorage.setItem("home_scroll", window.scrollY);
+                    location.href = "knowledge_engine.html?id=" + item.id +
+                        "&back=index.html";
+                }
+            });
+            return card;
+        }
+
+        // ============ 渲染分类导航 ============
+        function renderCatNav() {
+            const nav = document.getElementById("cat-nav");
+            nav.innerHTML = "";
+
+            const cats = [];
+            (window.KNOWLEDGE || []).forEach(k => {
+                if (k.category && !cats.includes(k.category)) {
+                    cats.push(k.category);
+                }
+            });
+
+            cats.forEach(cat => {
+                const a = document.createElement("a");
+                a.className = "cat-nav-btn";
+                a.href = "category.html?cat=" + encodeURIComponent(cat);
+                a.textContent = cat;
+                nav.appendChild(a);
+            });
+        }
+        
+        // ============ 渲染首页（按分类分区块） ============
+        function renderHome() {
+            const container = document.getElementById("normal-view");
+            container.innerHTML = "";
+
+            const grouped = {};
+            window.KNOWLEDGE.forEach(item => {
+                const cat = item.category || "未分类";
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(item);
+            });
+
+            for (const cat in grouped) {
+                const items = grouped[cat];
+                // 置顶的排前面
+                items.sort((a, b) => {
+                    // 置顶的排前面
+                    if (a.pinned && !b.pinned) return -1;
+                    if (!a.pinned && b.pinned) return 1;
+                    // 同为置顶或同为非置顶 → 按时间倒序（新的在前）
+                    return (b.created || "").localeCompare(a.created || "");
+                });
+
+                const block = document.createElement("div");
+                block.className = "category-block";
+
+                const header = document.createElement("div");
+                header.className = "category-header";
+
+                const nameEl = document.createElement("div");
+                nameEl.className = "category-name";
+                nameEl.textContent = cat;
+                header.appendChild(nameEl);
+
+                const countEl = document.createElement("div");
+                countEl.className = "category-count";
+                countEl.textContent = "共 " + items.length + " 条";
+                header.appendChild(countEl);
+
+                if (items.length > MAX_PER_CATEGORY) {
+                    const viewAll = document.createElement("a");
+                    viewAll.className = "view-all";
+                    viewAll.textContent = "查看全部 →";
+                    viewAll.href = "category.html?cat=" + encodeURIComponent(cat);
+                    header.appendChild(viewAll);
+                }
+
+                block.appendChild(header);
+
+                const wall = document.createElement("div");
+                wall.className = "card-wall";
+                items.slice(0, MAX_PER_CATEGORY).forEach(item => {
+                    wall.appendChild(makeCard(item));
+                });
+                block.appendChild(wall);
+
+                container.appendChild(block);
+            }
+        }
+
+        // ============ 搜索 ============
+        let fuse = null;
+
+        function initFuse() {
+            fuse = new Fuse(window.KNOWLEDGE, {
+                keys: ["title", "summary", "tags", "body"],
+                threshold: 0.4,
+                ignoreLocation: true
+            });
+        }
+
+        function doSearch() {
+            const q = document.getElementById("search-box").value.trim();
+
+            if (!q) {
+                // 空搜索 → 回到首页
+                document.getElementById("normal-view").style.display = "block";
+                document.getElementById("search-results").style.display = "none";
+                return;
+            }
+
+            const results = fuse.search(q).map(r => r.item);
+            renderSearchResults(results, q);
+            document.getElementById("normal-view").style.display = "none";
+            document.getElementById("search-results").style.display = "block";
+        }
+
+        function renderSearchResults(results, keyword) {
+            const container = document.getElementById("search-results");
+            container.innerHTML = "";
+
+            // 标题行
+            const header = document.createElement("div");
+            header.className = "category-header";
+
+            const backBtn = document.createElement("a");
+            backBtn.className = "view-all";
+            backBtn.style.marginLeft = "0";
+            backBtn.style.marginRight = "16px";
+            backBtn.textContent = "← 返回主页";
+            backBtn.href = "javascript:void(0)";
+            backBtn.addEventListener("click", () => {
+                document.getElementById("search-box").value = "";
+                document.getElementById("search-clear").classList.remove("show");
+                document.getElementById("normal-view").style.display = "block";
+                document.getElementById("search-results").style.display = "none";
+            });
+            header.appendChild(backBtn);
+
+            const nameEl = document.createElement("div");
+            nameEl.className = "category-name";
+            nameEl.textContent = "搜索：" + keyword;
+            header.appendChild(nameEl);
+            
+            const countEl = document.createElement("div");
+            countEl.className = "category-count";
+            countEl.textContent = "共 " + results.length + " 条";
+            header.appendChild(countEl);
+            container.appendChild(header);
+
+            if (!results.length) {
+                const hint = document.createElement("div");
+                hint.className = "empty-hint";
+                hint.textContent = "没有找到相关知识点";
+                container.appendChild(hint);
+                return;
+            }
+
+            const wall = document.createElement("div");
+            wall.className = "card-wall";
+            results.forEach(item => wall.appendChild(makeCard(item)));
+            container.appendChild(wall);
+        }
+
+        // ============ 启动 ============
+        const savedY = sessionStorage.getItem("home_scroll");
+        const needRestore = savedY !== null;
+
+        if (needRestore) {
+            // 先藏起来，避免用户看到"从顶部滚下去"的跳动
+            document.body.style.visibility = "hidden";
+            sessionStorage.removeItem("home_scroll");
+        }
+
+        renderHome();
+        renderCatNav();
+        initFuse();
+
+        if (needRestore) {
+            // 用 requestAnimationFrame，比 setTimeout 更快
+            requestAnimationFrame(() => {
+                window.scrollTo(0, parseInt(savedY, 10));
+                requestAnimationFrame(() => {
+                    document.body.style.visibility = "visible";
+                });
+            });
+        }
+
+        // 如果 URL 带 ?q=xxx（从知识点页返回），自动恢复搜索
+        const qParam = new URLSearchParams(location.search).get("q");
+        if (qParam) {
+            document.getElementById("search-box").value = qParam;
+            document.getElementById("search-clear").classList.add("show");
+            doSearch();
+        }
+
+        document.getElementById("search-btn").addEventListener("click", doSearch);
+
+        document.getElementById("search-box").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") doSearch();
+        });
+
+        document.getElementById("new-btn").addEventListener("click", () => {
+            location.href = "workbench.html";
+        });
+
+                // ============ 搜索框的 × 按钮 ============
+        const searchBox = document.getElementById("search-box");
+        const searchClear = document.getElementById("search-clear");
+
+        // 有内容才显示 ×
+        searchBox.addEventListener("input", () => {
+            if (searchBox.value) {
+                searchClear.classList.add("show");
+            } else {
+                searchClear.classList.remove("show");
+            }
+        });
+
+        // 点 × → 只清空搜索框文字
+        searchClear.addEventListener("click", () => {
+            searchBox.value = "";
+            searchClear.classList.remove("show");
+            searchBox.focus();
+        });
+
+        // ============ 搜索框：联想下拉 ============
+        const searchSuggest = document.getElementById("search-suggest");
+        const searchBoxEl = document.getElementById("search-box");
+
+        function renderSuggest(keyword) {
+            if (!keyword) {
+                searchSuggest.style.display = "none";
+                searchSuggest.innerHTML = "";
+                return;
+            }
+            const results = fuse.search(keyword).slice(0, 5).map(r => r.item);
+            if (!results.length) {
+                searchSuggest.style.display = "none";
+                return;
+            }
+
+            searchSuggest.innerHTML = "";
+            results.forEach(item => {
+                const div = document.createElement("div");
+                div.className = "suggest-item";
+                div.innerHTML = `${item.title}<span class="s-cat">${item.category || ""}</span>`;
+                // 用 mousedown 而不是 click，避免 input 失焦先触发
+                div.addEventListener("mousedown", (e) => {
+                    e.preventDefault();
+                    location.href = "knowledge_engine.html?id=" + item.id +
+                        "&back=" + encodeURIComponent("index.html?q=" + encodeURIComponent(keyword));
+                });
+                searchSuggest.appendChild(div);
+            });
+            searchSuggest.style.display = "block";
+        }
+
+        searchBoxEl.addEventListener("input", (e) => {
+            renderSuggest(e.target.value.trim());
+        });
+
+        // 失焦时隐藏（延迟，让 mousedown 先跑）
+        searchBoxEl.addEventListener("blur", () => {
+            setTimeout(() => { searchSuggest.style.display = "none"; }, 150);
+        });
+
+        // 点击别处隐藏
+        document.addEventListener("click", (e) => {
+            if (!document.getElementById("search-wrap").contains(e.target)) {
+                searchSuggest.style.display = "none";
+            }
+        });
+
+        // ============ 搜索框：右键菜单 ============
+        const ctxMenu = document.getElementById("ctxMenu");
+
+        searchBoxEl.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            ctxMenu.style.left = e.clientX + "px";
+            ctxMenu.style.top = e.clientY + "px";
+            ctxMenu.style.display = "block";
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!ctxMenu.contains(e.target)) {
+                ctxMenu.style.display = "none";
+            }
+        });
+
+        ctxMenu.querySelectorAll(".ctx-item").forEach(item => {
+            item.addEventListener("click", async () => {
+                const action = item.dataset.action;
+                ctxMenu.style.display = "none";
+                const start = searchBoxEl.selectionStart;
+                const end = searchBoxEl.selectionEnd;
+                const val = searchBoxEl.value;
+
+                if (action === "cut") {
+                    const sel = val.substring(start, end);
+                    if (!sel) return;
+                    try { await navigator.clipboard.writeText(sel); } catch (err) {}
+                    searchBoxEl.value = val.substring(0, start) + val.substring(end);
+                    searchBoxEl.selectionStart = searchBoxEl.selectionEnd = start;
+
+                } else if (action === "copy") {
+                    const sel = val.substring(start, end);
+                    if (!sel) return;
+                    try { await navigator.clipboard.writeText(sel); } catch (err) {}
+
+                } else if (action === "paste") {
+                    const text = await window.pywebview.api.read_clipboard();
+                    if (!text) return;
+                    searchBoxEl.value = val.substring(0, start) + text + val.substring(end);
+                    searchBoxEl.selectionStart = searchBoxEl.selectionEnd = start + text.length;
+                    searchBoxEl.focus();
+
+                } else if (action === "selectall") {
+                    searchBoxEl.focus();
+                    searchBoxEl.select();
+                }
+            });
+        });
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+1. Waiter: Welcome! What would you like to order?
+（欢迎光临！您想点什么？）
+​
+2. You: I’d like a beef burger combo, medium size.
+（我要一份牛肉汉堡套餐，中份。）
+​
+3. Waiter: Would you like fries or onion rings?
+（您要薯条还是洋葱圈？）
+​
+4. You: Fries, please. And a bottle of coke.
+（薯条，再来一瓶可乐。）
+​
+5. Waiter: Do you need extra ketchup?
+（需要额外的番茄酱吗？）
+​
+6. You: Yes, two packets, thanks.
+（要两包，谢谢。）
+​
+7. Waiter: Got it, please wait a moment.
+（好的，请稍等。）

@@ -1,0 +1,25 @@
+AI知识库工具,AI根据提示词写配置文件，对比卡片为啥总是用一样的颜色
+
+你看你这份 config 里 char_cards 那个元素，style 字段写了两次：
+json
+{   "type": "char_cards",   "style": { "leftColor": "#36d1dc", "rightColor": "#f6d365" },   ← 第一个   "content": { ... },   "style": ""                                                       ← 第二个 }
+JSON 里同名的键，后面那个会把前面那个覆盖掉。 所以颜色配置被空字符串吃掉了，引擎拿到 style 是 ""，读不到颜色，就走了随机 fallback。
+为什么 AI 会写两次
+因为提示词里每个元素的通用格式是这样：
+json
+{ "type": "title", "content": "...", "style": "" }
+每个元素都带一个 style 字段（就是 CSS 字符串，比如 font-size:...）。
+AI 给 char_cards 又加了一个专属颜色配置，也用了 style 这个名字，于是两个都写了。
+根子在字段名撞了。
+修法（两个，选一个）
+A. 改字段名（推荐）
+char_cards 里表示颜色的字段，从 style 改成 colors。
+每个元素的通用 style 还是字符串，管字体、字号
+char_cards 的配色用 colors，是对象
+这样永远不会撞。
+改完 AI 应该这么写：
+json
+{   "type": "char_cards",   "colors": { "leftColor": "#36d1dc", "rightColor": "#f6d365" },   "content": { ... },   "style": "" }
+要改两处：
+引擎：const style = el.style || {} 改成 const colors = el.colors || {}，里面的读取跟着改
+提示词：style 改成 colors

@@ -1,0 +1,26 @@
+Clerk: Can I help you?
+需要买点什么？
+You: I have a bad stomachache. Do you have any medicine for it?
+我肚子疼得厉害，有没有治这个的药？
+stomachache /ˈstʌməkeɪk/n. 肚子疼、胃痛
+Clerk: When did it start?
+什么时候开始疼的？
+You: It began last night.
+昨天晚上开始的。
+Clerk: Take one pill after each meal.
+每顿饭后吃一粒。
+pill /pɪl/n. 药丸
+You: Are there any side effects?
+有没有副作用？
+side effect 副作用
+Clerk: It might make you a little dizzy. Drink plenty of water.
+可能会有点头晕，多喝点水。
+dizzy /ˈdɪzi/adj. 头晕的
+You: Got it. How much does it cost?
+明白了，这个多少钱？
+Clerk: 12 dollars.
+12 美元。
+You: Here you are. Thank you.
+给你，谢谢。
+Clerk: You're welcome. Hope you feel better.
+不客气，希望你快点好起来。

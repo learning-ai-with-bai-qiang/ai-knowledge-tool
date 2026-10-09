@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>收藏夹</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+        #topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: #252526;
+            border-bottom: 1px solid #333;
+            padding: 14px 32px;
+            display: flex; align-items: center; gap: 20px;
+        }
+        #back-btn {
+            background: transparent; border: 1px solid #444;
+            color: #ccc; padding: 6px 14px; border-radius: 6px;
+            font-size: 13px; font-family: inherit; cursor: pointer;
+        }
+        #back-btn:hover { background: #2d2d35; color: #fff; border-color: #409eff; }
+        #cat-title { font-size: 16px; font-weight: bold; color: #fff; }
+        #cat-count { font-size: 13px; color: #888; }
+
+        #content { max-width: 1400px; margin: 0 auto; padding: 30px 32px; }
+
+        .card-wall {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .card {
+            position: relative;
+            background: #252526; border: 1px solid #333;
+            border-radius: 8px; padding: 12px 14px;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .card:hover { background: #2d2d35; border-color: #409eff; transform: translateY(-2px); }
+        .card-title { font-size: 15px; color: #fff; font-weight: 700; margin-bottom: 6px; }
+        .card-summary { font-size: 13px; color: #aaa; font-weight: 500; line-height: 1.5; margin-bottom: 10px; min-height: 20px; }
+        .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag { font-size: 11px; padding: 2px 8px; background: rgba(64,158,255,0.15); color: #66b1ff; border-radius: 10px; }
+        .card-date { font-size: 11px; color: #666; margin-top: 8px; text-align: right; }
+        .card-cat { font-size: 11px; color: #ffd93d; margin-bottom: 8px; }
+        .empty-hint { color: #666; font-size: 14px; text-align: center; padding: 60px 0; }
+    </style>
+</head>
+<body>
+    <div id="topbar">
+        <button id="back-btn">← 返回</button>
+        <div id="cat-title">⭐ 收藏夹</div>
+        <div id="cat-count"></div>
+    </div>
+    <div id="content">
+        <div class="card-wall" id="card-wall"></div>
+    </div>
+
+    <script src="../data/knowledge.js"></script>
+    <script>
+        function makeCard(item) {
+            const card = document.createElement("div");
+            card.className = "card";
+
+            const cat = document.createElement("div");
+            cat.className = "card-cat";
+            cat.textContent = item.category || "";
+            card.appendChild(cat);
+
+            const title = document.createElement("div");
+            title.className = "card-title";
+            title.textContent = item.title;
+            card.appendChild(title);
+
+            const summary = document.createElement("div");
+            summary.className = "card-summary";
+            summary.textContent = item.summary || "";
+            card.appendChild(summary);
+
+            if (item.tags && item.tags.length) {
+                const tagsEl = document.createElement("div");
+                tagsEl.className = "card-tags";
+                item.tags.forEach(t => {
+                    const tag = document.createElement("span");
+                    tag.className = "tag";
+                    tag.textContent = t;
+                    tagsEl.appendChild(tag);
+                });
+                card.appendChild(tagsEl);
+            }
+
+            if (item.created) {
+                const dateEl = document.createElement("div");
+                dateEl.className = "card-date";
+                dateEl.textContent = item.created;
+                card.appendChild(dateEl);
+            }
+
+            card.addEventListener("click", () => {
+                location.href = "knowledge_engine.html?id=" + item.id +
+                    "&back=" + encodeURIComponent("favorites.html");
+            });
+            return card;
+        }
+
+        function render() {
+            const items = (window.KNOWLEDGE || []).filter(k => k.favorite);
+            items.sort((a, b) => (b.created || "").localeCompare(a.created || ""));
+
+            document.getElementById("cat-count").textContent = "共 " + items.length + " 条";
+
+            const wall = document.getElementById("card-wall");
+            wall.innerHTML = "";
+            if (!items.length) {
+                wall.innerHTML = '<div class="empty-hint" style="grid-column:1/-1;">还没有收藏的知识点<br><br>去知识点页面点 ⭐ 收藏 试试</div>';
+                return;
+            }
+            items.forEach(it => wall.appendChild(makeCard(it)));
+        }
+
+        document.getElementById("back-btn").addEventListener("click", () => {
+            if (history.length > 1) history.back();
+            else location.href = "index.html";
+        });
+
+        render();
+    </script>
+</body>
+</html>

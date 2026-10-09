@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>分类</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+        #topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: #252526;
+            border-bottom: 1px solid #333;
+            padding: 14px 32px;
+            display: flex; align-items: center; gap: 20px;
+        }
+        #back-btn {
+            background: transparent; border: 1px solid #444;
+            color: #ccc; padding: 6px 14px; border-radius: 6px;
+            font-size: 13px; font-family: inherit; cursor: pointer;
+        }
+        #back-btn:hover { background: #2d2d35; color: #fff; border-color: #409eff; }
+        #home-btn {
+            background: transparent; border: 1px solid #444;
+            color: #ccc; padding: 6px 14px; border-radius: 6px;
+            font-size: 13px; font-family: inherit; cursor: pointer;
+            margin-left: 8px;
+        }
+        #home-btn:hover { background: #2d2d35; color: #fff; border-color: #409eff; }
+        #cat-title { font-size: 16px; font-weight: bold; color: #fff; }
+        #cat-count { font-size: 13px; color: #888; }
+
+        #content { max-width: 1400px; margin: 0 auto; padding: 30px 32px; }
+
+        .card-wall {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .card {
+            position: relative;
+            background: #252526; border: 1px solid #333;
+            border-radius: 8px; padding: 12px 14px;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .card:hover { background: #2d2d35; border-color: #409eff; transform: translateY(-2px); }
+        .card-title { font-size: 15px; color: #fff; font-weight: 700; margin-bottom: 6px; }
+        .card-summary { font-size: 13px; color: #aaa; font-weight: 500; line-height: 1.5; margin-bottom: 10px; min-height: 20px; }
+        .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag { font-size: 11px; padding: 2px 8px; background: rgba(64,158,255,0.15); color: #66b1ff; border-radius: 10px; }
+        .card-date { font-size: 11px; color: #666; margin-top: 8px; text-align: right; }
+        .pin-mark { position: absolute; top: 8px; right: 10px; font-size: 14px; }
+
+        /* 分页 */
+        #pager {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 30px;
+            padding: 20px 0;
+        }
+        #pager button {
+            padding: 8px 20px;
+            border-radius: 6px;
+            background: #3a3a3a;
+            color: #ddd;
+            border: 1px solid #444;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        #pager button:hover:not(:disabled) {
+            background: #4a4a4a;
+            border-color: #409eff;
+            color: #fff;
+        }
+        #pager button:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        #pager-info {
+            font-size: 13px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div id="topbar">
+        <button id="back-btn">← 返回</button>
+        <button id="home-btn">🏠 首页</button>
+        <div id="cat-title">加载中...</div>
+        <div id="cat-count"></div>
+    </div>
+    <div id="content">
+        <div class="card-wall" id="card-wall"></div>
+        <div id="pager"></div>
+    </div>
+
+    <script src="../data/knowledge.js"></script>
+    <script>
+        const PAGE_SIZE = 50;
+        const params = new URLSearchParams(location.search);
+        const CAT = params.get("cat") || "";
+        let currentPage = parseInt(params.get("page") || "1", 10);
+        if (isNaN(currentPage) || currentPage < 1) currentPage = 1;
+
+        let allItems = [];
+
+        function makeCard(item) {
+            const card = document.createElement("div");
+            card.className = "card";
+
+            const title = document.createElement("div");
+            title.className = "card-title";
+            title.textContent = item.title;
+            card.appendChild(title);
+
+            const summary = document.createElement("div");
+            summary.className = "card-summary";
+            summary.textContent = item.summary || "";
+            card.appendChild(summary);
+
+            if (item.tags && item.tags.length) {
+                const tagsEl = document.createElement("div");
+                tagsEl.className = "card-tags";
+                item.tags.forEach(t => {
+                    const tag = document.createElement("span");
+                    tag.className = "tag";
+                    tag.textContent = t;
+                    tagsEl.appendChild(tag);
+                });
+                card.appendChild(tagsEl);
+            }
+
+            if (item.created) {
+                const dateEl = document.createElement("div");
+                dateEl.className = "card-date";
+                dateEl.textContent = item.created;
+                card.appendChild(dateEl);
+            }
+
+            if (item.pinned) {
+                const mark = document.createElement("div");
+                mark.className = "pin-mark";
+                mark.textContent = "📌";
+                card.appendChild(mark);
+            }
+
+            card.addEventListener("click", () => {
+                const back = "category.html?cat=" + encodeURIComponent(CAT) +
+                    "&page=" + currentPage;
+                location.href = "knowledge_engine.html?id=" + item.id +
+                    "&back=" + encodeURIComponent(back);
+            });
+            return card;
+        }
+
+        function render() {
+            const totalPages = Math.max(1, Math.ceil(allItems.length / PAGE_SIZE));
+
+            // 当前页超出范围 → 修正
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const pageItems = allItems.slice(start, start + PAGE_SIZE);
+
+            document.getElementById("cat-title").textContent = CAT || "未分类";
+            document.getElementById("cat-count").textContent = "共 " + allItems.length + " 条";
+
+            const wall = document.getElementById("card-wall");
+            wall.innerHTML = "";
+            if (!pageItems.length) {
+                wall.innerHTML = '<div style="color:#666;padding:40px;grid-column:1/-1;text-align:center;">该分类下还没有知识点</div>';
+            } else {
+                pageItems.forEach(it => wall.appendChild(makeCard(it)));
+            }
+
+            // 分页控件
+            const pager = document.getElementById("pager");
+            pager.innerHTML = "";
+            if (totalPages > 1) {
+                const prevBtn = document.createElement("button");
+                prevBtn.textContent = "← 上一页";
+                prevBtn.disabled = (currentPage <= 1);
+                prevBtn.addEventListener("click", () => goToPage(currentPage - 1));
+
+                const info = document.createElement("span");
+                info.id = "pager-info";
+                info.textContent = currentPage + " / " + totalPages;
+
+                const nextBtn = document.createElement("button");
+                nextBtn.textContent = "下一页 →";
+                nextBtn.disabled = (currentPage >= totalPages);
+                nextBtn.addEventListener("click", () => goToPage(currentPage + 1));
+
+                pager.appendChild(prevBtn);
+                pager.appendChild(info);
+                pager.appendChild(nextBtn);
+            }
+        }
+
+        function goToPage(p) {
+            currentPage = p;
+            // 更新 URL（不刷新页面）
+            const url = "category.html?cat=" + encodeURIComponent(CAT) + "&page=" + p;
+            history.replaceState(null, "", url);
+            render();
+            window.scrollTo(0, 0);
+        }
+
+        // 初始化
+        allItems = (window.KNOWLEDGE || []).filter(k => k.category === CAT);
+        allItems.sort((a, b) => {
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            return (b.created || "").localeCompare(a.created || "");
+        });
+
+        render();
+
+        // 按钮
+        document.getElementById("back-btn").addEventListener("click", () => {
+            if (history.length > 1) history.back();
+            else location.href = "index.html";
+        });
+        document.getElementById("home-btn").addEventListener("click", () => {
+            location.href = "index.html";
+        });
+    </script>
+</body>
+</html>

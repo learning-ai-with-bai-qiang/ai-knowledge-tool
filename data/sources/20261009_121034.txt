@@ -1,0 +1,8 @@
+# 知识库条目：pywebview开启调试控制台（AI知识库工具 app.py）
+**名称**：pywebview开启调试控制台（AI知识库工具 app.py）
+**内容**：
+AI知识库工具app.py中，`webview.start()`传入`debug=True`，即可开启前端调试控制台。开启后，软件窗口内右键可选择【检查】，调出开发者工具，查看JS报错、console.log打印信息，用来调试HTML、CSS、JavaScript前端代码。
+代码示例：`webview.start(debug=True)`
+**备注**
+1. 仅开发阶段使用；打包发布成品时，移除`debug=True`，关闭调试面板，防止用户随意查看前端源码。
+2. 开启debug=True会恢复浏览器原生右键菜单；自定义右键菜单代码里必须写`e.preventDefault()`拦截原生右键，避免两个菜单冲突。

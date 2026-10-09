@@ -1,0 +1,17 @@
+token_set_ratio 是给英文设计的——它靠"空格"分词。中文没空格，整段被当成一个词，所以算出来分数很低。
+
+改法：换中文能用的算法
+打开 app.py，找到 check_duplicate 里这一行：
+
+python
+            score = fuzz.token_set_ratio(user_text, target)
+改成：
+
+python
+            score = max(
+                fuzz.ratio(user_text, target),
+                fuzz.partial_ratio(user_text, target),
+            )
+fuzz.ratio 是按"字符"逐个比，中文这种没空格的文本，它算得准。
+partial_ratio 是"子串匹配"，一句短话包含在长文里也算高分。
+两个取最大，保证不漏。
