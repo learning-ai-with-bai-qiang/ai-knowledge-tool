@@ -22,20 +22,6 @@
                 border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 10px;
             }
             #sizePanel .panel-title { cursor: move; }
-            #sizePanel .el-list {
-                display: flex; flex-direction: column; gap: 6px;
-                margin-bottom: 12px; max-height: 300px; overflow-y: auto; padding-right: 4px;
-            }
-            #sizePanel .el-item {
-                display: flex; align-items: center; justify-content: space-between;
-                padding: 6px 10px; border-radius: 8px; cursor: pointer;
-                color: rgba(255,255,255,0.5); font-size: 13px; border: 1px solid transparent;
-            }
-            #sizePanel .el-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
-            #sizePanel .el-item.active { background: rgba(255,215,0,0.12); border-color: rgba(255,215,0,0.2); color: #ffd93d; }
-            #sizePanel .el-item .el-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
-            #sizePanel .el-item .el-size { font-size: 11px; background: rgba(255,255,255,0.06); padding: 0 8px; border-radius: 4px; color: rgba(255,255,255,0.3); }
-            #sizePanel .el-item.active .el-size { color: #ffd93d; }
 
             #sizePanel .control-area {
                 background: rgba(255,255,255,0.04); border-radius: 10px;
@@ -105,6 +91,11 @@
         injectUI();
     }
 
+    // 页面上点元素 → 选中它
+    window.addEventListener("kb-element-clicked", (e) => {
+        if (!panelOpen) return;   // 面板没开，忽略
+        selectElement(e.detail.id);
+    });
 
 
     // ============ 往页面上插 UI ============
@@ -125,10 +116,9 @@
         const sizePanel = document.createElement("div");
         sizePanel.id = "sizePanel";
         sizePanel.innerHTML = `
-            <div class="panel-title">🎯 尺寸调控 · 点击元素选中</div>
-            <div class="el-list" id="elList"></div>
+            <div class="panel-title">🎯 调控面板 · 点击页面元素选中</div>
             <div class="control-area" id="controlArea">
-                <div class="no-selection">← 点击上方元素</div>
+                <div class="no-selection">在页面上点击任意元素</div>
             </div>
         `;
         document.body.appendChild(sizePanel);
@@ -181,40 +171,10 @@
         panelToggle.classList.toggle("active", panelOpen);
         panelToggle.textContent = panelOpen ? "✕ 关闭" : "🎛️ 调控面板";
         if (panelOpen) {
-            buildPanelList();
             if (selectedElId) selectElement(selectedElId);
         } else {
             exitEditMode();
         }
-    }
-
-    // ============ 构建元素列表 ============
-    function buildPanelList() {
-        const list = document.getElementById("elList");
-        list.innerHTML = "";
-        if (!allElements.length) {
-            list.innerHTML = '<div style="color:rgba(255,255,255,0.2);font-size:12px;padding:8px;text-align:center;">暂无元素</div>';
-            return;
-        }
-        allElements.forEach(el => {
-            const item = document.createElement("div");
-            item.className = "el-item" + (el.id === selectedElId ? " active" : "");
-
-            const nameSpan = document.createElement("span");
-            nameSpan.className = "el-name";
-            nameSpan.textContent = el.name;
-
-            const sizeSpan = document.createElement("span");
-            sizeSpan.className = "el-size";
-            const currentScale = el.node.dataset.scale || "1.0";
-            sizeSpan.textContent = "×" + currentScale;
-
-            item.appendChild(nameSpan);
-            item.appendChild(sizeSpan);
-            item.dataset.elId = el.id;
-            item.addEventListener("click", () => selectElement(el.id));
-            list.appendChild(item);
-        });
     }
 
     // ============ 选中元素 ============
@@ -222,9 +182,6 @@
         exitEditMode();
 
         selectedElId = id;
-        document.querySelectorAll("#elList .el-item").forEach(item => {
-            item.classList.toggle("active", item.dataset.elId === id);
-        });
         const el = allElements.find(e => e.id === id);
         if (!el) {
             document.getElementById("controlArea").innerHTML = '<div class="no-selection">未找到元素</div>';
@@ -271,16 +228,7 @@
         const node = el.node;
         node.dataset.scale = scale.toFixed(1);
         node.style.zoom = scale;
-
-        const items = document.querySelectorAll("#elList .el-item");
-        items.forEach(item => {
-            if (item.dataset.elId === id) {
-                const sizeSpan = item.querySelector(".el-size");
-                if (sizeSpan) sizeSpan.textContent = "×" + scale.toFixed(1);
-            }
-        });
     }
-
     // ============ 编辑模式 ============
     function enterEditMode(node, el) {
         exitEditMode();
@@ -293,6 +241,13 @@
             el.srcEl.content = node.innerHTML;
         };
         node.addEventListener("input", editingHandler);
+
+        // 主动把焦点扔进去，这样用户点一下就能直接编辑
+        setTimeout(() => {
+            try {
+                node.focus();
+            } catch (e) {}
+        }, 30);
     }
 
     function exitEditMode() {

@@ -1,1 +1,0 @@
-有哪些适合本地部署的轻量NLP模型 比如uer/roberta-tiny-chinese轻量中文BERT模型,FastText文本分类工具,均为零付费纯本地部署,适合低配置电脑运行

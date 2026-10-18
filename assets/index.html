@@ -309,12 +309,72 @@
             margin-left: 8px;
         }
         .suggest-item:hover .s-cat { color: #cce5ff; }
-
         /* 右键菜单 hover */
         .ctx-item:hover {
             background: #409eff;
             color: #fff;
         }
+        /* 管理分类面板样式 */
+        #manage-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+        .manage-item {
+            display: flex;
+            align-items: center;
+            background: #3a3a3a;
+            padding: 6px 14px;
+            border-radius: 6px;
+            gap: 12px;
+        }
+        .manage-item .m-name {
+            font-size: 14px;
+            color: #fff;
+            font-weight: 700;
+        }
+        .manage-item .m-count {
+            font-size: 12px;
+            color: #888;
+        }
+        .manage-item .m-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+        }
+        .manage-item .m-actions button {
+            background: transparent;
+            color: #409eff;
+            border: 1px solid #409eff;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .manage-item .m-actions button.m-del {
+            color: #f56c6c;
+            border-color: #f56c6c;
+        }
+        .manage-item .m-actions button:hover {
+            background: rgba(64,158,255,0.1);
+        }
+        .manage-item .m-actions button.m-del:hover {
+            background: rgba(245,108,108,0.1);
+        }
+        .manage-item input.m-input {
+            background: #1e1e1e;
+            border: 1px solid #409eff;
+            border-radius: 4px;
+            color: #fff;
+            padding: 2px 8px;
+            font-size: 14px;
+            outline: none;
+            width: 160px;
+            font-family: inherit;
+        }
+
     </style>
 </head>
 <body>
@@ -329,6 +389,8 @@
         </div>
         <button id="search-btn">搜索</button>
         <a id="fav-entry" href="favorites.html" style="padding: 8px 18px; background: transparent; color: #ffd93d; border: 1px solid rgba(255,215,0,0.4); border-radius: 6px; font-size: 14px; text-decoration: none; white-space: nowrap;">⭐ 收藏夹</a>
+        <a id="feedback-btn" href="https://gitee.com/learning-ai-with-bai-qiang/ai-knowledge-tool/issues" target="_blank" style="padding: 8px 18px; background: transparent; color: #ffffff; font-weight: 700; border: 1px solid rgba(64,158,255,0.4); border-radius: 6px; font-size: 14px; text-decoration: none; white-space: nowrap;">💬 反馈</a>
+        <a id="help-btn" href="help.html" style="padding: 8px 18px; background: transparent; color: #ffffff; font-weight: 700; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; font-size: 14px; text-decoration: none; white-space: nowrap;">❓ 使用说明</a>
         <button id="new-btn">＋ 新建知识点</button>
     </div>
     
@@ -336,6 +398,7 @@
     <!-- 分类导航 -->
     <div id="cat-nav-wrap">
         <div id="cat-nav-label">导航栏</div>
+        <button id="manage-cat-btn" style="padding: 4px 12px; border-radius: 20px; background: #3a3a3a; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid transparent; margin-left: 8px; font-family: inherit;">⚙️ 管理分类</button>
         <div id="cat-nav"></div>
     </div>
     <div id="content">
@@ -353,6 +416,7 @@
 
     <!-- 加载数据 -->
     <script src="../data/knowledge.js"></script>
+    <script src="../data/categories.js"></script>
     <script src="fuse.min.js"></script>
 
 
@@ -413,47 +477,166 @@
             return card;
         }
 
-        // ============ 渲染分类导航 ============
+        // ============ 分类导航与管理面板 ============
+        let isManaging = false; // 是否处于管理状态
+        // 👇 新增：页面刷新后，检查是否需要恢复管理状态
+        if (sessionStorage.getItem("keep_managing") === "true") {
+            isManaging = true;
+            sessionStorage.removeItem("keep_managing");
+            document.getElementById("manage-cat-btn").textContent = "✅ 完成";
+            document.getElementById("cat-nav-label").style.display = "none";
+        }
+
+        // 按创建时间排序获取分类列表（供多处复用）
+        function getSortedCategories() {
+            return (window.CATEGORIES || [])
+                .slice()
+                .sort((a, b) => (a.created || "").localeCompare(b.created || ""));
+        }
+
         function renderCatNav() {
             const nav = document.getElementById("cat-nav");
             nav.innerHTML = "";
 
-            const cats = [];
+            const sortedCats = getSortedCategories();
+
+            // 统计每个分类下的知识点数量（依然从 KNOWLEDGE 里算）
+            const catCount = {};
             (window.KNOWLEDGE || []).forEach(k => {
-                if (k.category && !cats.includes(k.category)) {
-                    cats.push(k.category);
+                if (k.category) {
+                    catCount[k.category] = (catCount[k.category] || 0) + 1;
                 }
             });
 
-            cats.forEach(cat => {
-                const a = document.createElement("a");
-                a.className = "cat-nav-btn";
-                a.href = "category.html?cat=" + encodeURIComponent(cat);
-                a.textContent = cat;
-                nav.appendChild(a);
+            if (!isManaging) {
+                // 普通模式：渲染跳转按钮
+                sortedCats.forEach(c => {
+                    const a = document.createElement("a");
+                    a.className = "cat-nav-btn";
+                    a.href = "category.html?cat=" + encodeURIComponent(c.name);
+                    a.textContent = c.name;
+                    nav.appendChild(a);
+                });
+                return;
+            }
+
+            // 管理面板模式
+            const list = document.createElement("div");
+            list.id = "manage-list";
+            sortedCats.forEach(c => {
+                const cat = c.name;
+                const count = catCount[cat] || 0;
+
+                const item = document.createElement("div");
+                item.className = "manage-item";
+
+                const nameEl = document.createElement("span");
+                nameEl.className = "m-name";
+                nameEl.textContent = cat;
+
+                const countEl = document.createElement("span");
+                countEl.className = "m-count";
+                countEl.textContent = "(" + count + "条)";
+
+                const actions = document.createElement("div");
+                actions.className = "m-actions";
+
+                // 重命名按钮
+                const editBtn = document.createElement("button");
+                editBtn.textContent = "重命名";
+                editBtn.onclick = () => {
+                    const input = document.createElement("input");
+                    input.className = "m-input";
+                    input.value = cat;
+                    nameEl.replaceWith(input);
+                    input.focus();
+                    input.select();
+
+                    const saveRename = () => {
+                        const newName = input.value.trim();
+                        if (newName && newName !== cat) {
+                            window.pywebview.api.rename_category(cat, newName).then((res) => {
+                                if (res && res.ok) {
+                                    sessionStorage.setItem("keep_managing", "true");
+                                    location.reload(); // 👈 不再手动改内存，直接重载页面
+                                } else {
+                                    alert("重命名失败：" + (res.msg || "未知错误"));
+                                    renderCatNav();
+                                }
+                            });
+                        } else {
+                            renderCatNav();
+                        }
+                    };
+
+                    input.onblur = saveRename;
+                    input.onkeydown = (e) => {
+                        if (e.key === "Enter") saveRename();
+                        if (e.key === "Escape") renderCatNav();
+                    };
+                };
+
+                // 删除按钮
+                const delBtn = document.createElement("button");
+                delBtn.className = "m-del";
+                delBtn.textContent = "删除";
+                delBtn.onclick = () => {
+                    if (confirm(`确定删除分类「${cat}」吗？\n该分类下有 ${count} 条知识点，删除后不可恢复！`)) {
+                        window.pywebview.api.delete_category(cat).then((res) => {
+                            if (res && res.ok) {
+                                sessionStorage.setItem("keep_managing", "true");
+                                location.reload(); // 👈 不再手动改内存，直接重载页面
+                            } else {
+                                alert("删除失败：" + (res.msg || "未知错误"));
+                            }
+                        });
+                    }
+                };
+
+                actions.appendChild(editBtn);
+                actions.appendChild(delBtn);
+                item.appendChild(nameEl);
+                item.appendChild(countEl);
+                item.appendChild(actions);
+                list.appendChild(item);
             });
+
+            nav.appendChild(list);
         }
+
+        // 绑定“管理分类”按钮点击事件
+        document.getElementById("manage-cat-btn").addEventListener("click", function() {
+            isManaging = !isManaging;
+            this.textContent = isManaging ? "✅ 完成" : "⚙️ 管理分类";
+            document.getElementById("cat-nav-label").style.display = isManaging ? "none" : "block";
+            renderCatNav();
+        });
         
         // ============ 渲染首页（按分类分区块） ============
         function renderHome() {
             const container = document.getElementById("normal-view");
             container.innerHTML = "";
 
+            // 先把所有知识点按分类分组
             const grouped = {};
-            window.KNOWLEDGE.forEach(item => {
+            (window.KNOWLEDGE || []).forEach(item => {
                 const cat = item.category || "未分类";
                 if (!grouped[cat]) grouped[cat] = [];
                 grouped[cat].push(item);
             });
 
-            for (const cat in grouped) {
+            // 按 categories.js 的时间顺序遍历分类
+            const sortedCats = getSortedCategories();
+
+            sortedCats.forEach(c => {
+                const cat = c.name;
                 const items = grouped[cat];
-                // 置顶的排前面
+                if (!items || !items.length) return; // 该分类下没有知识点，跳过
+
+                // 置顶的排前面，其余按时间倒序
                 items.sort((a, b) => {
-                    // 置顶的排前面
                     if (a.pinned && !b.pinned) return -1;
                     if (!a.pinned && b.pinned) return 1;
-                    // 同为置顶或同为非置顶 → 按时间倒序（新的在前）
                     return (b.created || "").localeCompare(a.created || "");
                 });
 
@@ -491,7 +674,7 @@
                 block.appendChild(wall);
 
                 container.appendChild(block);
-            }
+            });
         }
 
         // ============ 搜索 ============
@@ -562,10 +745,21 @@
                 return;
             }
 
+            const MAX_RESULTS = 10;
+            const showResults = results.slice(0, MAX_RESULTS);
+            const hidden = results.length - showResults.length;
+
             const wall = document.createElement("div");
             wall.className = "card-wall";
-            results.forEach(item => wall.appendChild(makeCard(item)));
+            showResults.forEach(item => wall.appendChild(makeCard(item)));
             container.appendChild(wall);
+
+            if (hidden > 0) {
+                const more = document.createElement("div");
+                more.style.cssText = "color:#888; font-size:13px; text-align:center; padding:24px 0; grid-column:1/-1;";
+                more.textContent = "还有 " + hidden + " 条相关结果，请细化关键词";
+                container.appendChild(more);
+            }
         }
 
         // ============ 启动 ============

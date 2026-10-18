@@ -434,7 +434,7 @@
             // 同分类内的所有知识点，按 created 排序
             const list = window.KNOWLEDGE
                 .filter(k => k.category === me.category)
-                .sort((a, b) => (a.created || "").localeCompare(b.created || ""));
+                .sort((a, b) => (b.created || "").localeCompare(a.created || ""));
 
             const idx = list.findIndex(k => k.id === selfId);
             if (idx === -1) return null;
@@ -447,12 +447,13 @@
 
             const box = document.createElement("div");
             box.style.cssText = "display:flex; justify-content:space-between; gap:16px; width:100%; max-width:800px; margin-top:20px;";
-
+            // 👇 新增：计算当前分类页的返回地址
+            const backUrl = "category.html?cat=" + encodeURIComponent(me.category);
             function makeBtn(label, item, align) {
                 if (item) {
                     const btn = document.createElement("a");
                     btn.href = "knowledge_engine.html?id=" + item.id +
-                        "&back=" + encodeURIComponent("knowledge_engine.html?id=" + item.id);
+                        "&back=" + encodeURIComponent(backUrl);
                     btn.textContent = label;
                     btn.style.cssText = `
                         padding:10px 18px; border-radius:8px;
@@ -481,7 +482,8 @@
             if (!window.KNOWLEDGE) return null;
             const me = window.KNOWLEDGE.find(k => k.id === selfId);
             if (!me) return null;
-
+            // 👇 新增这一行：计算当前知识点所属分类页的返回地址
+            const backUrl = "category.html?cat=" + encodeURIComponent(me.category);
             const myTags = new Set(me.tags || []);
             if (myTags.size === 0) return null;
 
@@ -505,7 +507,8 @@
                 `<div style="color:#ffd93d;font-weight:bold;margin-bottom:12px;">🔗 相关知识点</div>` +
                 scored.map(x =>
                     `<div style="margin:8px 0;line-height:1.6;">` +
-                    `<a href="knowledge_engine.html?id=${x.item.id}" class="wiki-link">${x.item.title}</a>` +
+                    // 👇 核心修改：在 href 中加上 back 参数，并编码
+                    `<a href="knowledge_engine.html?id=${x.item.id}&back=${encodeURIComponent(backUrl)}" class="wiki-link">${x.item.title}</a>` +
                     (x.item.summary ? `<span style="color:#888;font-size:12px;margin-left:8px;">${x.item.summary}</span>` : "") +
                     `</div>`
                 ).join("");
@@ -722,7 +725,13 @@
                 name: node.dataset.name || el.type,
                 srcEl: el
             });
-
+            // 点击元素 → 通知调控面板
+            node.addEventListener("click", (e) => {
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent("kb-element-clicked", {
+                    detail: { id: elId }
+                }));
+            });
             return node;
         }
 
@@ -776,10 +785,14 @@
         document.getElementById("pinBtn").addEventListener("click", async () => {
             const r = await window.pywebview.api.toggle_pin(PAGE_ID);
             if (r && r.ok) {
+                const me = (window.KNOWLEDGE || []).find(k => k.id === PAGE_ID);
+                if (me) me.pinned = r.pinned;
                 showToast(r.pinned ? "✅ 已置顶" : "✅ 已取消置顶");
                 await refreshPinBtn();
+            } else {
+                showToast("❌ " + (r && r.msg || "操作失败"));
             }
-        }); 
+        });
         
         // ============ 收藏 ============
         async function refreshFavBtn() {
@@ -798,9 +811,10 @@
         document.getElementById("favBtn").addEventListener("click", async () => {
             const r = await window.pywebview.api.toggle_favorite(PAGE_ID);
             if (r && r.ok) {
+                const me = (window.KNOWLEDGE || []).find(k => k.id === PAGE_ID);
+                if (me) me.favorite = r.favorite;
                 showToast(r.favorite ? "✅ 已收藏" : "✅ 已取消收藏");
                 await refreshFavBtn();
-                location.reload();
             } else {
                 showToast("❌ " + (r && r.msg || "操作失败"));
             }
@@ -849,7 +863,8 @@
 
             const r = await window.pywebview.api.delete_page(PAGE_ID);
             if (r && r.ok) {
-                location.href = "index.html";
+                const back = new URLSearchParams(location.search).get("back");
+                location.href = back || "index.html";
             } else {
                 showToast("❌ 删除失败：" + (r && r.msg || "未知错误"));
             }

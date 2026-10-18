@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI知识库工具 · 使用说明</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        background: #1e1e1e;
+        color: #ffffff; /* 正文纯白 */
+        font-size: 16px;
+        font-weight: 400; /* 常规字体，不加粗 */
+        line-height: 1.9;
+    }
+
+    /* ============ 布局 ============ */
+    .layout {
+        display: flex;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    /* ============ 左侧目录 ============ */
+    .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        padding: 40px 20px 40px 0;
+        border-right: 1px solid #333;
+    }
+    .sidebar-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #333;
+    }
+    .sidebar a {
+        display: block;
+        padding: 8px 12px;
+        color: #ffffff; /* 目录纯白加粗 */
+        font-weight: 700;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 14px;
+        margin-bottom: 4px;
+        transition: 0.15s;
+    }
+    .sidebar a:hover {
+        background: #2d2d35;
+        color: #66b1ff; /* 悬停高亮蓝 */
+    }
+
+    /* ============ 右侧内容 ============ */
+    .content {
+        flex: 1;
+        max-width: 820px;
+        padding: 40px 40px 120px;
+    }
+
+    .content h1 {
+        font-size: 28px;
+        color: #ffffff;
+        font-weight: 700;
+        margin-bottom: 8px;
+        line-height: 1.4;
+    }
+    .content .subtitle {
+        color: #888;
+        font-size: 15px;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #333;
+    }
+
+    /* 一级标题：加大、加粗、加亮 */
+    .content h2 {
+        font-size: 22px;
+        color: #ffffff;
+        font-weight: 700;
+        margin: 50px 0 16px;
+        padding-left: 12px;
+        border-left: 4px solid #409eff;
+        line-height: 1.4;
+    }
+
+    /* 二级标题（步骤名）：亮黄色加粗 */
+    .content h3 {
+        font-size: 17px;
+        color: #ffd93d;
+        font-weight: 700;
+        margin: 28px 0 10px;
+    }
+
+    .content p {
+        margin-bottom: 14px;
+    }
+
+    .content ul, .content ol {
+        margin: 10px 0 20px 24px;
+    }
+    .content li {
+        margin-bottom: 6px;
+    }
+
+    .content code {
+        background: #2a2a2a;
+        color: #ffd93d;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: Consolas, Monaco, monospace;
+        font-size: 14px;
+    }
+
+    /* ============ 重点色 ============ */
+    .highlight-yellow { color: #ffd93d; font-weight: 700; }
+    .highlight-blue { color: #66b1ff; font-weight: 700; }
+    .highlight-red { color: #ff7676; font-weight: 700; }
+
+    /* ============ 提示框 ============ */
+    .tip {
+        background: rgba(64,158,255,0.1);
+        border-left: 4px solid #409eff;
+        padding: 14px 18px;
+        border-radius: 6px;
+        margin: 18px 0;
+        color: #ffffff;
+        font-size: 15px;
+    }
+    .tip.warn {
+        background: rgba(255, 118, 118, 0.1);
+        border-left-color: #ff7676;
+    }
+
+    /* ============ 图片占位 ============ */
+    .img-box {
+        margin: 24px 0;
+    }
+    .img-inner {
+        width: 100%;
+        min-height: 220px;
+        background: #252526;
+        border: 2px dashed #444;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-size: 14px;
+        gap: 8px;
+    }
+    .img-inner .icon { font-size: 32px; }
+    .img-caption {
+        text-align: center;
+        color: #777;
+        font-size: 13px;
+        margin-top: 8px;
+    }
+
+    /* ============ FAQ 折叠 ============ */
+    details {
+        background: #252526;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin-bottom: 12px;
+    }
+    details summary {
+        color: #ffffff;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 16px;
+        list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before {
+        content: "▸ ";
+        color: #409eff;
+        font-weight: 700;
+    }
+    details[open] summary::before { content: "▾ "; }
+    details p, details ul {
+        margin-top: 12px;
+        color: #ffffff;
+    }
+
+    /* ============ 回到顶部 ============ */
+    #backTop {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #3a3a3a;
+        border: 1px solid #555;
+        color: #ffffff;
+        font-size: 20px;
+        cursor: pointer;
+        z-index: 100;
+        display: none;
+        font-family: inherit;
+    }
+    #backTop:hover { background: #409eff; border-color: #409eff; }
+
+    /* ============ 移动端 ============ */
+    @media (max-width: 768px) {
+        .layout { flex-direction: column; padding: 0 16px; }
+        .sidebar {
+            width: 100%;
+            height: auto;
+            position: static;
+            border-right: none;
+            border-bottom: 1px solid #333;
+            padding: 20px 0;
+        }
+        .content { padding: 24px 0 80px; }
+        .content h1 { font-size: 22px; }
+        .content h2 { font-size: 18px; }
+    }
+</style>
+</head>
+<body>
+
+    <div style="padding: 20px 40px 0; max-width: 1200px; margin: 0 auto;">
+        <a href="index.html" style="display: inline-block; padding: 8px 18px; background: transparent; color: #ffffff; font-weight: 700; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; font-size: 14px; text-decoration: none;">← 返回首页</a>
+    </div>
+
+<div class="layout">
+    <!-- ============ 左侧目录 ============ -->
+    <nav class="sidebar">
+        <div class="sidebar-title">📚 使用说明</div>
+        <a href="#intro">一、工具简介</a>
+        <a href="#quick">二、30秒快速上手</a>
+        <a href="#step">三、如何录入知识</a>
+        <a href="#page">四、知识点页面介绍</a>
+        <a href="#home">五、首页介绍</a>
+        <a href="#faq">六、常见问题</a>
+    </nav>
+
+    <!-- ============ 右侧内容 ============ -->
+    <main class="content">
+        <h1>AI知识库工具使用说明</h1>
+
+        <!-- ============ 一、工具简介 ============ -->
+        <h2 id="intro">一、工具简介</h2>
+        <p><span class="highlight-yellow">注意:</span> 本知识库工具实际是一个小型网站,无论在哪个界面点击右上角的×号,都会退出工具。所以要习惯点左上角的返回首页。</p>
+        <p>借助<span class="highlight-yellow">免费 AI</span> 整理知识，生成结构清晰的知识点页面，把每天学到的碎片知识，变成<span class="highlight-yellow">属于你自己的知识库</span>。让枯燥的学习变得有趣味，由于每个页面都可以个性化设计，复习时也不会视觉疲劳。</p>
+
+        <div class="img-box">
+            <img src="help_img/step1.png" style="width: 100%; border-radius: 10px; border: 1px solid #333;" alt="工具首页总览">
+            <div class="img-caption">图 1：知识点页面示例</div>
+        </div>
+
+        <!-- ============ 二、30秒快速上手 ============ -->
+        <h2 id="quick">二、30秒快速上手</h2>
+        <ol>
+            <li>点击首页的<span class="highlight-blue">新建知识点</span></li>
+            <li>在文案区录入知识点</li>
+            <li>点击<span class="highlight-blue">拼接提示词</span></li>
+            <li>粘贴给AI</li>
+            <li>复制AI写好的配置文件</li>
+            <li>回到工具点击<span class="highlight-blue">导入配置</span></li>
+            <li>进入知识点预览，第一条知识录入成功，点击页面顶部<span class="highlight-blue">移动按钮</span>，即可查看当前知识点属于哪个分类。</li>
+        </ol>
+
+        <!-- ============ 三、如何录入知识 ============ -->
+        <h2 id="step">三、如何录入知识 具体操作流程</h2>
+
+        <h3>第1步 新建知识点</h3>
+        <p>在文案区输入知识内容</p>
+        <div class="img-box">
+            <img src="help_img/step2.png" style="width: 100%; border-radius: 10px; border: 1px solid #333;" alt="工具首页总览">
+            <div class="img-caption">图 2：新建知识点 编辑界面</div>
+        </div>
+
+        <h3>第2步 拼接提示词</h3>
+        <p>点<span class="highlight-blue">拼接提示词</span>按钮，工具自动把提示词和知识点拼接在一起，并完成复制</p>
+
+        <h3>第3步 直接粘贴给免费AI</h3>
+        <p>免费AI就可以，作者推荐 <span class="highlight-yellow">deepseek</span> 和 <span class="highlight-yellow">元宝</span>，<span class="highlight-yellow">kimi</span>也行但是免费额度有限。</p>
+
+        <h3>第4步 复制AI写好的配置文件</h3>
+        <p>回到新建知识点页面，点击<span class="highlight-blue">导入配置</span>，直接进入知识点页面预览。（什么是配置文件，它是AI根据提示词写的一段代码，就是知识点的页面样式，有固定格式，开始是 <code>window.PAGE</code>，结尾是 <code>}</code> 大括号）</p>
+
+        <h3>第5步 知识点页面编辑</h3>
+        <p>有<span class="highlight-blue">调控面板</span>，可以调页面元素大小和修改文字，目前不支持修改对比卡片，其他都可以。小修小改自己调（调整完大小或者修改文字后别忘了点<span class="highlight-blue">保存</span>）。</p>
+        <p>大改就交给AI，因为刚刚给过AI提示词和知识点，修改时直接用自然语言告诉AI怎么改就行。比如让AI把样式改得再丰富些，或者用地方方言讲述知识，或者改成童话风格太空探索风格等等，让AI重新写好配置文件，点<span class="highlight-blue">重新编辑</span>就可回到新建知识点，点<span class="highlight-blue">导入配置</span>即可进入知识点页面预览。</p>
+        <p>如果什么也没改，不用点保存修改，工具会自动保存知识点页面。</p>
+        <p>点页面顶部的<span class="highlight-blue">移动按钮</span>，可以查看当前知识点的所在分类（AI写配置文件时，会主动把知识点归类。如果知识点跟现有分类都不匹配，工具会新建一个分类，把知识点放进去）。如果你觉得AI归类不合理，可以把知识点移动到其他分类。也可以输入新分类名，就可以创建一个新的分类，刚录入的知识点也会自动进入新建的分类。</p>
+
+        <div class="img-box">
+            <img src="help_img/step3.png" style="width: 100%; border-radius: 10px; border: 1px solid #333;" alt="工具首页总览">
+            <div class="img-caption">图 3：知识点页面编辑界面</div>
+        </div>
+
+        <!-- ============ 四、知识点页面介绍 ============ -->
+        <h2 id="page">四、知识点页面介绍</h2>
+        <p>移动和重新编辑在上面第5步已经介绍过。</p>
+        <p><span class="highlight-blue">朗读本文</span>：直接点击即可朗读本文，声音有些机械，但是生成速度快。</p>
+        <p><span class="highlight-blue">置顶按钮</span>：目前最多支持4条知识点置顶。</p>
+        <p><span class="highlight-blue">收藏按钮</span>：点击收藏后，去首页即可看到收藏夹。</p>
+        <p><span class="highlight-red">删除按钮，不要轻易点，删除后不可恢复。</span></p>
+
+        <!-- ============ 五、首页介绍 ============ -->
+        <h2 id="home">五、首页介绍</h2>
+        <p>最上面知识库字样右边 是<span class="highlight-blue">搜索框</span>，开始没有知识点，什么也搜不到。</p>
+        <p><span class="highlight-blue">收藏夹</span>：可查看收藏的知识点。</p>
+        <p><span class="highlight-blue">反馈</span>：使用中发现什么问题可以反馈给作者，跳转到 Gitee Issues 页面提交。</p>
+        <p><span class="highlight-blue">使用说明</span>：点开后就是这个使用说明书。</p>
+        <p>下面一点导航栏，有<span class="highlight-blue">管理分类</span>按钮，刚开始没有分类，点击后什么也不显示。第一步要先录入知识，工具会自动新建分类。</p>
+
+ 
+        <div class="img-box">
+            <img src="help_img/step4.png" style="width: 100%; border-radius: 10px; border: 1px solid #333;" alt="工具首页总览">
+            <div class="img-caption">图 4：首页按钮介绍</div>
+        </div>
+
+
+        <!-- ============ 六、常见问题 ============ -->
+        <h2 id="faq">六、常见问题</h2>
+
+        <details>
+            <summary>调控面板挡住按钮怎么办</summary>
+            <p>把鼠标移动到调控面板顶部，会出现十字箭头，点击并移动位置就可以了</p>
+        </details>
+        
+        <details>
+            <summary>配置文件导入失败是怎么回事</summary>
+            <p>可能是AI写的配置文件格式有问题，或者复制配置文件的时候，把多余内容复制进去了。注意配置文件的开头是<code>window.PAGE</code>，结尾是 <code>}</code> 大括号） <code></code> 如果是deepseek，元宝或者kimi一般不会出错</p>
+        </details>
+
+        
+        <details>
+            <summary>知识点如何防止重复录入</summary>
+            <p>在新建知识点的文案输入区,写完知识点拼接提示词时,工具会自动检测新知识点是否重复，但不保证一定能检测出来 。  <code></code> 如果觉得以前录入过，但是工具没检测出来，可以到首页搜索一下有没有相关知识</p>
+        </details>
+
+        <details>
+            <summary>朗读没有声音怎么办？</summary>
+            <ul>
+                <li>检查系统是否安装了中文语音包（Windows 设置 → 时间和语言 → 语音）</li>
+                <li>在知识点页面，点击<span class="highlight-blue">保存修改</span>，会删除旧的音频缓存，再点击<span class="highlight-blue">朗读本文</span>，会重新生成音频。</li>
+                <li>如果依然不行，可能是系统语音引擎异常，重启工具后再试。</li>
+            </ul>
+        </details>
+
+        <details>
+            <summary>分类顺序为什么变了？</summary>
+            <p>分类顺序按“分类创建时间”排列，后来创建的分类会排在后面。如果你编辑了某个知识点，不会影响分类顺序。如果发现顺序异常，请反馈给我们。</p>
+        </details>
+
+        <details>
+            <summary>怎么备份我的知识库？</summary>
+            <p>直接复制整个 <code>data/</code> 文件夹即可。里面包含所有知识点、分类索引和音频缓存。恢复时，把文件夹覆盖回原位就行。</p>
+        </details>
+
+        <details>
+            <summary>怎么修改知识点的排版样式？</summary>
+            <p>在知识点页面点击<span class="highlight-blue">重新编辑</span>，让 AI 重新生成配置文件，再重新导入即可覆盖。注意：重新让AI写配置文件，<span class="highlight-red">不用再拼接提示词</span>，直接用自然语言提需求就行。</p>
+        </details>
+
+        <details>
+            <summary>数据会上传到云端吗？</summary>
+            <p>不会。所有数据都存在你本地 <code>data/</code> 文件夹里，该AI知识库工具不用联网。</p>
+        </details>
+
+        <p style="margin-top: 60px; color: #555; font-size: 13px; text-align: center;">
+            AI 知识库工具 · 使用说明 · 版本 v1.0
+        </p>
+
+    </main>
+</div>
+
+<!-- ============ 回到顶部 ============ -->
+<button id="backTop" title="回到顶部">↑</button>
+
+<script>
+    const backTop = document.getElementById("backTop");
+    window.addEventListener("scroll", () => {
+        backTop.style.display = window.scrollY > 300 ? "block" : "none";
+    });
+    backTop.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+</script>
+
+</body>
+</html>
