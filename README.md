@@ -30,7 +30,7 @@
 
 ## 🚀 快速开始（普通用户）
 
-1. 前往 [Gitee Releases](https://gitee.com/learning-ai-with-bai-qiang/ai-knowledge-tool/releases) 下载最新版的 `AI知识库工具.zip` 压缩包。
+1. 前往 [Github Releases](https://github.com/learning-ai-with-bai-qiang/ai-knowledge-tool/releases) 下载最新版的 `AI知识库工具.zip` 压缩包。
 2. 解压到任意文件夹（**请勿直接放在 C 盘系统目录**）。
 3. 双击 `AI知识库工具.exe` 即可运行，**无需安装 Python 环境**。
 4. 所有数据均保存在软件同级目录下的 `data` 文件夹中，请定期备份此文件夹。
