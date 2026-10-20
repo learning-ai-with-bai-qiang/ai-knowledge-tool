@@ -50,7 +50,7 @@
 
 ```bash
 # 1. 克隆仓库
-git clone https://gitee.com/learning-ai-with-bai-qiang/ai-knowledge-tool.git
+git clone https://github.com/learning-ai-with-bai-qiang/ai-knowledge-tool.git
 cd ai-knowledge-tool
 
 # 2. 创建并激活虚拟环境
@@ -86,7 +86,7 @@ python build.py
 ## 🤝 反馈与支持
 
 如果你在使用中遇到问题，或者有更好的建议，欢迎提交 Issues。
-👉 [点击这里提交反馈](https://gitee.com/learning-ai-with-bai-qiang/ai-knowledge-tool/issues)
+👉 [点击这里提交反馈](https://github.com/learning-ai-with-bai-qiang/ai-knowledge-tool/issues)
 
 ## 📄 开源协议
 
